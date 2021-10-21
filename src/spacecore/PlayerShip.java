@@ -57,8 +57,9 @@ public class PlayerShip
 	private float rollAcc = 0;
 	private float pitchAcc;
 	public World world;
-	private float doop;
+	private float doop, doopx;
 	//public Terrain terrain;
+	boolean adjusted = false;
     // Constructor does nothign
     public PlayerShip()
     {
@@ -77,7 +78,7 @@ public class PlayerShip
     public void InitShip()
     {
         // Default position slight above ground
-        Position = new Vector3f(0, 5f, 0);
+        Position = new Vector3f(Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() / 2), 5f, Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() / 2));
         
         // Set forward to Z+ BASIS VECTORS
         Forward = new Vector3f(0, 0, 1);
@@ -108,10 +109,10 @@ public class PlayerShip
         // Possible angle change
         float dPitch = 0;
         float dRoll = 0;
-        if(doop!=0)
-        {
-        	pitchAcc=0.01f;
-        }
+        //if(doop!=0)
+        //{
+       // 	pitchAcc=0.01f;
+        //}
         
         // Changing pitch and roll (Pitch is on Z axis)
         if(Keyboard.isKeyDown(Keyboard.KEY_W))
@@ -262,6 +263,72 @@ public class PlayerShip
         Quaternion.mul(QResult, QRoll, QResult);
         Quaternion.mul(QResult, QPitch, QResult);
         QResult.normalise();
+        
+        boolean clipped = false;
+        
+        //copy vertices for calcs
+        List<Vector3f> vertices = new ArrayList<Vector3f>();
+        for(Vector3f Vertex : model.vertices)
+        {
+            // Apply rotation then translation
+            Vector3f vt = new Vector3f(Vertex);
+            vt = ApplyQuatToPoint(QResult, vt);
+            Vector3f.add(vt, Position, vt);
+            vertices.add(vt);
+        }
+        
+        //System.out.println("vertex[0] in ship: " + vertices.get(0).y + " vertex[0] in model: " + world.terrain.model.vertices.get(0).y);
+        float maxDistInto = 0;
+        for (Vector3f mvertex : vertices)
+        {
+        	float terrainHeight = Main.terrain.getHeightOfTerrain(mvertex.x, mvertex.z);
+            //for(Vector3f wvertex : world.terrain.model.vertices)
+            //{
+        		float heightToClip = terrainHeight;
+        		if (mvertex.y <= 0) {
+        			heightToClip = 0;
+        		}
+        		if (mvertex.y <= heightToClip) {
+            		clipped = true;
+            		maxDistInto = Math.max(maxDistInto, Math.abs(heightToClip - mvertex.y));
+            		//System.out.println(mvertex.y + " " + terrainHeight);
+            		
+            	}
+            //}
+        }
+        if (clipped) {
+        	Position.y += maxDistInto;
+        }
+        
+        
+        /*
+         * there is a tile factor of 2 so heightmap is scaled to 4 duplicate terrain grids w certain resolution
+         * if ship pos > 1 tile factor, shift 
+         * 
+         */
+        
+        
+        /* GRID ONE DETECTION */
+        
+        float angle_to_x = Vector2f.angle(
+        		new Vector2f(Forward.x, Forward.z), 
+        		new Vector2f(Main.terrain.getTerrainLength() / 2, 0)) * 180/3.14f;
+    	float angle_to_z = Vector2f.angle(
+        		new Vector2f(Forward.x, Forward.z), 
+        		new Vector2f(0, Main.terrain.getTerrainLength() / 2)) * 180/3.14f;
+        
+        if (Position.x > (Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .75f)) ||
+        	Position.x < (Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .25f)) ||
+        	Position.z < (Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .25f)) ||
+        	Position.z > (Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .75f))) {
+        	
+        	System.out.println("trigger move terrain");
+        	
+        	
+        }
+        System.out.println("angle_to_x " + angle_to_x + " angle_to_z " + angle_to_z);
+         
+        
     }
     
     // Render the ship
@@ -318,7 +385,7 @@ public class PlayerShip
                    Position.x+=0.05;
                    world.Lasers.add(new Laser(Buffer,QMatrix,Position));
                    Position.x-=0.05;
-                   coolDown-=30;
+                   coolDown-=10;
                
             }
             if(coolDown!=30)
@@ -402,6 +469,7 @@ public class PlayerShip
             vertices.add(vt);
         }
         
+        
         // NOTE: WE DO THIS COLLISION TEST HERE SINCE WE HAVE THE
         // TRANSLATION MODEL (i.e. global data)
         
@@ -414,14 +482,18 @@ public class PlayerShip
          Vector3f min = new Vector3f(-420,-420,-420);
          float mini = 3f;
          float terrainHeight = Main.terrain.getHeightOfTerrain(Position.x,Position.z);
- 		if (Position.y < terrainHeight) {
- 		//System.out.println("whay");
+ 		
+         
+         /*if (Position.y < terrainHeight) {
  			Position.y = terrainHeight;
  		}
+ 		*/
  		
-        for (Vector3f Vertex : vertices)
+ 		
+ 		
+ 		
+       /* for (Vector3f Vertex : vertices)
         {
-        	//System.out.println(Vertex.x + " " + Vertex.z);
             if(Vertex.y < 0.0f && Vertex.y < MaxD)
             {
             	MaxD = Vertex.y;
@@ -429,15 +501,7 @@ public class PlayerShip
             for(int i =0;i<world.terrain.model.vertices.size();i++)
             {
             	
-            	/*if(Math.abs(Vertex.x-world.terrain.model.vertices.get(i).x)<2.5f && Math.abs(Vertex.z-world.terrain.model.vertices.get(i).z)<2.5f && Vertex.y<world.terrain.model.vertices.get(i).y)
-            	{
-            		
-            		
-            		
-            		doop = 0.1f;
-            	}
-            
-            	*/
+            	
             	
             	if(Math.abs(Vertex.x-world.terrain.model.vertices.get(i).x)<3.3f && Math.abs(Vertex.z-world.terrain.model.vertices.get(i).z)<3.3f)
             	{
@@ -452,28 +516,41 @@ public class PlayerShip
             	}
             	
             	
-            	
+            	//ds to keep track of closest ship point to terrain
             	
             }
             if(Vertex.y<min.y && min.y!=-420)
             {
+            	System.out.println("colliding with floor");
             	doop = 0.01f;
+            	Position.y = min.y;
            // 	TargetVelocity+=0.0009f;
             //	Position.y=min.y;
             	//MaxD = Vertex.y;
+            	if (Vertex.x < min.x) {
+            		doopx = 0.01f;
+            		Position.x = min.x;
+            	}
+            	TargetVelocity *= 0f;
+            } else {
+            	doop = 0.0f;
             }
            
             
                 
         }
-        Position.y+=doop;
+        */
+        //Position.y+=doop;
+        //Position.x+=doopx;
         //
-       if(Math.abs(MaxD) > 0.0f)
+       /*if(Math.abs(MaxD) > 0.0f)
         {
             Position.y += Math.abs(MaxD);
             
             Bounced = true;
+        
         }
+        */
         
         // Assume the light source is just high above
         Vector3f LightPos = new Vector3f(0, 1000, 0);
@@ -487,11 +564,11 @@ public class PlayerShip
 
             // Draw the mode components
             Vector3f v1 = getPlaneIntersect(vertices.get((int) face.vertex.x - 1), LightPos);
-            GL11.glVertex3f(v1.x, v1.y, v1.z);
+            GL11.glVertex3f(v1.x, Main.terrain.getHeightOfTerrain(v1.x, v1.z), v1.z);
             Vector3f v2 = getPlaneIntersect(vertices.get((int) face.vertex.y - 1), LightPos);
-            GL11.glVertex3f(v2.x, v2.y, v2.z);
+            GL11.glVertex3f(v2.x, Main.terrain.getHeightOfTerrain(v2.x, v2.z), v2.z);
             Vector3f v3 = getPlaneIntersect(vertices.get((int) face.vertex.z - 1), LightPos);
-            GL11.glVertex3f(v3.x, v3.y, v3.z);
+            GL11.glVertex3f(v3.x, Main.terrain.getHeightOfTerrain(v3.x, v3.z), v3.z);
         }
         GL11.glEnd();
     }

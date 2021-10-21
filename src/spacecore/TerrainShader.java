@@ -35,7 +35,8 @@ public class TerrainShader extends ShaderProgram {
 
 	@Override
 	protected void bindAttributes() {
-		super.bindAttribute(0, "position");
+		//super.bindAttribute(0, "position");
+		super.bindAttribute(0, "region1");
 	}
 
 	@Override

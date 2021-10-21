@@ -104,7 +104,7 @@ public class World
 
 
         
-        ModelList.add(terrain);
+        //ModelList.add(terrain);
         Random rand = new Random();
         int randomNum;
         // Load a bunch of rocks..
@@ -183,7 +183,7 @@ public class World
             // Render ground and right below
             GL11.glTranslatef(Pos.x, 0, Pos.z);
             
-            Vector3f Color = new Vector3f(236.0f / 255.0f, 200.0f / 255.0f, 122.0f / 255.0f);
+            Vector3f Color = new Vector3f(0, 0, 0);
             RenderGround(WorldSize, Color);
         GL11.glPopMatrix();
         
@@ -212,10 +212,10 @@ public class World
         // Set the ship color to red for now
         GL11.glColor3f(Color.x, Color.y, Color.z);
         GL11.glBegin(GL11.GL_QUADS);
-            GL11.glVertex3f(-WorldLength, 0, -WorldLength);
-            GL11.glVertex3f(WorldLength, 0, -WorldLength);
-            GL11.glVertex3f(WorldLength, 0, WorldLength);
-            GL11.glVertex3f(-WorldLength, 0, WorldLength);
+            GL11.glVertex3f(-WorldLength, 1, -WorldLength);
+            GL11.glVertex3f(WorldLength, 1, -WorldLength);
+            GL11.glVertex3f(WorldLength, 1, WorldLength);
+            GL11.glVertex3f(-WorldLength, 1, WorldLength);
         GL11.glEnd();
         
         // Done

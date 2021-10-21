@@ -29,8 +29,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.TrueTypeFont;
-import org.newdawn.slick.geom.Rectangle;
-import org.newdawn.slick.geom.ShapeRenderer;
 
 import spacecore.Laser;
 import spacecore.Loader;
@@ -64,8 +62,9 @@ public class Main
     boolean CameraType = true;
     TrueTypeFont ttf;
     public static Terrain terrain;
-    public Renderer renderer;
-	private Rectangle ass = new Rectangle(10,10,10,10);
+    //todo array of terrains
+    public static Renderer renderer;
+	//private Rectangle ass = new Rectangle(10,10,10,10);
 
 	
     
@@ -105,7 +104,7 @@ public class Main
         Display.setFullscreen(false);
         Display.setTitle("");
         Display.create();
-        terrain = new Terrain(0, 0, new Loader(), "heightmap");
+        terrain = new Terrain(0, 0, new Loader(), "heightmap", 1000);
         renderer = new Renderer(terrain);
         
         //Keyboard
@@ -239,10 +238,10 @@ public class Main
             CameraPos.y += 1;
             
             // Little error correction: always make the camera above ground
-            if(CameraPos.y < 0.01f)
-            {
-                CameraPos.y = 0.01f;
-            }
+            //if(CameraPos.y < 0.01f)
+            //{
+            //    CameraPos.y = 0.01f;
+            //}
            
             GLU.gluLookAt(CameraPos.x, CameraPos.y, CameraPos.z, CameraTarget.x, CameraTarget.y, CameraTarget.z, CameraUp.x, CameraUp.y, CameraUp.z);
            
@@ -266,12 +265,11 @@ public class Main
         {
         	doop.render();
         }
-        
-       // renderer.shader.start();
+        renderer.shader.start();
         renderer.prepare();
         
         renderer.render();
-     //   renderer.shader.stop();
+        renderer.shader.stop();
         
       
         
@@ -282,7 +280,13 @@ public class Main
         // 2D GUI
        
         resizeGL2D();
-        UI.Render(TestShip.GetRealVelocity(), TestShip.GetTargetVelocity(), TestShip.VEL_MAX);
+        UI.Render(TestShip.GetRealVelocity(), 
+        		TestShip.GetTargetVelocity(), 
+        		TestShip.VEL_MAX, 
+        		(TestShip.Position.x - terrain.getTerrainStartX()) / terrain.getTerrainLength(), 
+        		(TestShip.Position.z - terrain.getTerrainStartZ()) / terrain.getTerrainLength(),
+        		DISPLAY_WIDTH,
+        		DISPLAY_HEIGHT);
         glLoadIdentity();
         GL11.glEnable(GL11.GL_BLEND);
     	GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -290,10 +294,10 @@ public class Main
     	ttf.drawString(100, 30, "Speed: "+ (int)(TestShip.GetRealVelocity()*100));
     	ttf.drawString(100, 50, "ALTITUDE: "+(int)TestShip.Position.y);
     	ttf.drawString(100, 70, "X: "+(int)TestShip.Position.x+" Z: "+(int)TestShip.Position.z);
-    	ass.setBounds(0,32,TestShip.coolDown,195);
+    	//ass.setBounds(0,32,TestShip.coolDown,195);
     	//ShapeRenderer.draw(ass);
     	  glColor3f(1,0,0);
-    	ShapeRenderer.fill(ass);
+    	//ShapeRenderer.fill(ass);
     	GL11.glDisable(GL11.GL_BLEND); 
    
     	

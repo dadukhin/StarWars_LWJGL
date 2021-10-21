@@ -32,14 +32,16 @@ public void render() {
      
     GL11.glMultMatrix(Buffer);
 	
-	GL11.glLineWidth(5.0f);
+    GL11.glLineWidth(5.0f);
     GL11.glBegin(GL11.GL_LINES);
-    GL11.glColor3f(0.8f, 0, 0);
+
+    GL11.glColor3f(0.0f, 0.8f, 0);
     GL11.glVertex3f(0, 0.25f, i);
     GL11.glVertex3f(0, 0.25f, 5+i);
     GL11.glEnd();
     
-    
+    GL11.glLineWidth(1.0f);
+
    // s.draw(0.01f, 30, 30);
    // GL11.glEnd();
     
