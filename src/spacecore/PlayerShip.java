@@ -317,16 +317,86 @@ public class PlayerShip
         		new Vector2f(Forward.x, Forward.z), 
         		new Vector2f(0, Main.terrain.getTerrainLength() / 2)) * 180/3.14f;
         
-        if (Position.x > (Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .75f)) ||
-        	Position.x < (Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .25f)) ||
-        	Position.z < (Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .25f)) ||
-        	Position.z > (Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .75f))) {
+    	boolean cond1 = (Position.x < (Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .25f)) &&
+    					Forward.x < 0);
+    	boolean cond2 = (Position.x > (Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .75f)) &&
+    					Forward.x > 0);
+    	boolean cond3 = (Position.z < (Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .25f)) &&
+    					Forward.z < 0);
+    	boolean cond4 = (Position.z > (Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .75f)) &&
+    					Forward.z > 0);
+    	
+    	System.out.println("terrainX: " + Main.terrain.getTerrainStartX() + 
+        		" terrainZ: " + Main.terrain.getTerrainStartZ() + 
+        		" posX: " + Position.x +
+        		" posZ: " + Position.z + 
+        		" angle_to_x " + angle_to_x +
+        		" angle_to_z " + angle_to_z +
+    			" velX: " + Forward.x +
+    			" velZ: " + Forward.z);
+    	System.out.println("approaching right grid boundary: " + cond1 +
+				   " approaching left grid boundary: " + cond2 +
+				   " approaching lower boundary " + cond3 +
+				   " approaching upper boundary "+ cond4);
+    	
+    	//cond1 = false;
+    	//cond2 = false;
+    	//cond3 = false;
+    	//cond4 = false;
+        if (cond1 || cond2 || cond3 || cond4) {
         	
         	System.out.println("trigger move terrain");
-        	
+        	float angleThresh = 20;
+        	if (angle_to_x < angleThresh) {
+        		System.out.println("ANGLE TO X < THRESH");
+        		Main.terrain.moveTerrain(
+        				Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .5f), 
+        				Main.terrain.getTerrainStartZ());
+        	} else if (180 - angle_to_x < angleThresh) {
+        		System.out.println(" parallel to pos X");
+        		Main.terrain.moveTerrain(
+        				Main.terrain.getTerrainStartX() - (Main.terrain.getTerrainLength() * .5f), 
+        				Main.terrain.getTerrainStartZ());
+        	} else if (angle_to_z < angleThresh) {
+        		Main.terrain.moveTerrain(
+        				Main.terrain.getTerrainStartX(), 
+        				Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .5f));
+        	} else if (180 - angle_to_z < angleThresh) {
+        		Main.terrain.moveTerrain(
+        				Main.terrain.getTerrainStartX(), 
+        				Main.terrain.getTerrainStartZ() - (Main.terrain.getTerrainLength() * .5f));
+        	} else if (Forward.x < 0) {
+        		System.out.println("COND");
+        		if (Forward.z > 0) {
+        			System.out.println("SUBCOND");
+            		Main.terrain.moveTerrain(
+            				Main.terrain.getTerrainStartX() - (Main.terrain.getTerrainLength() * .5f), 
+            				Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .5f));
+        		} else if (Forward.z < 0) {
+        			System.out.println("SUBCOND2");
+
+        			Main.terrain.moveTerrain(
+            				Main.terrain.getTerrainStartX() - (Main.terrain.getTerrainLength() * .5f), 
+            				Main.terrain.getTerrainStartZ() - (Main.terrain.getTerrainLength() * .5f));
+        		}
+        	} else if (Forward.x > 0) {
+        		System.out.println("COND_OTHER");
+        		if (Forward.z > 0) {
+        			System.out.println("SUBCOND_OTHER");
+            		Main.terrain.moveTerrain(
+            				Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .5f), 
+            				Main.terrain.getTerrainStartZ() + (Main.terrain.getTerrainLength() * .5f));
+        		} else if (Forward.z < 0) {
+        			System.out.println("SUBCOND2_OTHER");
+
+        			Main.terrain.moveTerrain(
+            				Main.terrain.getTerrainStartX() + (Main.terrain.getTerrainLength() * .5f), 
+            				Main.terrain.getTerrainStartZ() - (Main.terrain.getTerrainLength() * .5f));
+        		}
+        	}
         	
         }
-        System.out.println("angle_to_x " + angle_to_x + " angle_to_z " + angle_to_z);
+        
          
         
     }
@@ -441,7 +511,7 @@ public class PlayerShip
         GL11.glPopMatrix();
         
         // Render the shadow (view-volume)
-        // Note: we render the shadow independant of the model's translation and rotation
+        // Note: we render the shadow independant of the model's rotation
         // THOUGH NOTE: we do translate the shadow up a tiny bit off the ground so it doesnt z-fight
         GL11.glPushMatrix();
         
@@ -469,91 +539,10 @@ public class PlayerShip
             vertices.add(vt);
         }
         
-        
-        // NOTE: WE DO THIS COLLISION TEST HERE SINCE WE HAVE THE
-        // TRANSLATION MODEL (i.e. global data)
-        
-        // Make sure the model never goes below the surface, and if
-        // it does, push it back up, but if it does too much, crash ship
-        float MaxD = 0.0f;
-         doop = 0f;
-       // System.out.println(world.terrain.model.vertices);
-        //System.exit(1);
-         Vector3f min = new Vector3f(-420,-420,-420);
-         float mini = 3f;
-         float terrainHeight = Main.terrain.getHeightOfTerrain(Position.x,Position.z);
- 		
-         
-         /*if (Position.y < terrainHeight) {
- 			Position.y = terrainHeight;
- 		}
- 		*/
- 		
- 		
- 		
- 		
-       /* for (Vector3f Vertex : vertices)
-        {
-            if(Vertex.y < 0.0f && Vertex.y < MaxD)
-            {
-            	MaxD = Vertex.y;
-            }
-            for(int i =0;i<world.terrain.model.vertices.size();i++)
-            {
-            	
-            	
-            	
-            	if(Math.abs(Vertex.x-world.terrain.model.vertices.get(i).x)<3.3f && Math.abs(Vertex.z-world.terrain.model.vertices.get(i).z)<3.3f)
-            	{
-            		
-            	
-            	float distance = (float)Math.sqrt((float)((Vertex.x-world.terrain.model.vertices.get(i).x)*(Vertex.x-world.terrain.model.vertices.get(i).x))+(float)((Vertex.z-world.terrain.model.vertices.get(i).z)*(Vertex.z-world.terrain.model.vertices.get(i).z)));
-        		if(distance<mini)
-        		{
-        			mini = distance;
-        			min = world.terrain.model.vertices.get(i);
-        		}
-            	}
-            	
-            	
-            	//ds to keep track of closest ship point to terrain
-            	
-            }
-            if(Vertex.y<min.y && min.y!=-420)
-            {
-            	System.out.println("colliding with floor");
-            	doop = 0.01f;
-            	Position.y = min.y;
-           // 	TargetVelocity+=0.0009f;
-            //	Position.y=min.y;
-            	//MaxD = Vertex.y;
-            	if (Vertex.x < min.x) {
-            		doopx = 0.01f;
-            		Position.x = min.x;
-            	}
-            	TargetVelocity *= 0f;
-            } else {
-            	doop = 0.0f;
-            }
-           
-            
-                
-        }
-        */
-        //Position.y+=doop;
-        //Position.x+=doopx;
-        //
-       /*if(Math.abs(MaxD) > 0.0f)
-        {
-            Position.y += Math.abs(MaxD);
-            
-            Bounced = true;
-        
-        }
-        */
-        
-        // Assume the light source is just high above
-        Vector3f LightPos = new Vector3f(0, 1000, 0);
+ 
+       
+        // Assume the light source is right above the ship at all times
+        Vector3f LightPos = new Vector3f(Translation.x, 1000, Translation.z);
         
         // For each triangle, project onto the plane XZ-plane
         GL11.glBegin(GL11.GL_TRIANGLES);

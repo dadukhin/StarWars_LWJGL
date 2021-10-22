@@ -22,25 +22,31 @@ public class Terrain {
 	private float x;
 	private float z;
 	private RawModel model;
+	private Loader loader = null;
+	private String heightMap = "heightmap";
 	public float offset = 0;
 	
 
 	private float[][] heights;
 
-	public Terrain(int gridX, int gridZ, Loader loader, String heightMap, float size) {
+	public Terrain(float X, float Z, Loader loader, String heightMap, float size) {
 		
-		this.x = gridX * SIZE;
-		this.z = gridZ * SIZE;
+		this.x = X;
+		this.z = Z;
 		this.SIZE = size;
 		this.model = generateTerrain(loader, heightMap);
+		this.heightMap = heightMap;
+		this.loader = loader;
+		
+		moveTerrain(100, 100);
 	}
 	
 	public float getTerrainStartX() {
-		return this.x - offset;
+		return this.x /*- offset*/;
 	}
 	
 	public float getTerrainStartZ() {
-		return this.z - offset;
+		return this.z /*- offset*/;
 	}
 	
 	public int getTerrainLength() {
@@ -48,8 +54,8 @@ public class Terrain {
 	}
 
 	public float getHeightOfTerrain(float worldX, float worldZ) {
-		float terrainX = worldX - this.x - offset;
-		float terrainZ = worldZ - this.z - offset;
+		float terrainX = worldX - this.x/* - offset*/;
+		float terrainZ = worldZ - this.z /*- offset*/;
 		float gridSquareSize = SIZE / (float) (heights.length - 1); //1;
 		int gridX = ((int) Math.floor(terrainX / gridSquareSize)); //- 100;
 		int gridZ = ((int) Math.floor(terrainZ / gridSquareSize)); //- 100;
@@ -66,7 +72,13 @@ public class Terrain {
 		}
 		return answer;
 	}
-
+	public void moveTerrain(float X, float Z) {
+		this.x = X;
+		this.z = Z;
+		//gonna have to regen terrain
+		this.model = generateTerrain(loader, heightMap);
+		
+	}
 	private RawModel generateTerrain(Loader loader, String heightMap) {
 
 		BufferedImage image = null;
@@ -86,11 +98,11 @@ public class Terrain {
 		int vertexPointer = 0;
 		for (int i = 0; i < VERTEX_COUNT; i++) {
 			for (int j = 0; j < VERTEX_COUNT; j++) {
-				vertices[vertexPointer * 3] = ((float) j / ((float) VERTEX_COUNT - 1) * SIZE) + offset;
+				vertices[vertexPointer * 3] = ((float) j / ((float) VERTEX_COUNT - 1) * SIZE) + this.x;
 				float height = getHeight(j, i, image);
 				heights[j][i] = height;
 				vertices[vertexPointer * 3 + 1] = height;
-				vertices[vertexPointer * 3 + 2] = ((float) i / ((float) VERTEX_COUNT - 1) * SIZE) + offset;
+				vertices[vertexPointer * 3 + 2] = ((float) i / ((float) VERTEX_COUNT - 1) * SIZE) + this.z;
 				Vector3f normal = calculateNormal(j, i, image);
 				normals[vertexPointer * 3] = normal.x;
 				normals[vertexPointer * 3 + 1] = normal.y;
